@@ -12,6 +12,7 @@ use crossterm::{
 };
 use invaders::{
     frame::{self, Drawable, new_frame},
+    invaders::{Invaders},
     player::{Player},
     render,
 };
@@ -52,6 +53,7 @@ fn main() -> Result <(), Box<dyn Error>> {
     // Game Loop
     let mut player = Player::new();
     let mut instant = Instant::now();
+    let mut invaders = Invaders::new();
     'gameloop: loop {
         // Per-frame init
         let delta = instant.elapsed();
@@ -80,10 +82,17 @@ fn main() -> Result <(), Box<dyn Error>> {
 
         // Updates 
         player.update(delta);
+        if invaders.update(delta) {
+            audio.play("move");
+        }
 
         // Draw & render - will fail for first few sends (due to receiver not being present?) 
         // TODO look into this more
-        player.draw(&mut curr_frame);
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders]; // generics 
+        for drawable in drawables {
+            drawable.draw(&mut curr_frame);
+        }
+
         let _ = render_tx.send(curr_frame);
         thread::sleep(Duration::from_millis(1));
     }
