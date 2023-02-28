@@ -4,20 +4,17 @@ use crate::{
     frame::{Drawable, Frame},
     NUM_COLS, NUM_ROWS,
 };
-use std::{
-    cmp::max,
-    time::Duration,
-};
+use std::{cmp::max, time::Duration};
 
 pub struct Invader {
-    pub x: usize, 
+    pub x: usize,
     pub y: usize,
 }
 
 pub struct Invaders {
     pub army: Vec<Invader>,
     move_timer: Timer,
-    direction: i32
+    direction: i32,
 }
 
 impl Invaders {
@@ -30,14 +27,15 @@ impl Invaders {
                     && (y > 0)
                     && (y < 9)
                     && (x % 2 == 0)
-                    && (y % 2 == 0) {
-                        army.push(Invader { x, y });
-                    }
+                    && (y % 2 == 0)
+                {
+                    army.push(Invader { x, y });
+                }
             }
         }
 
         Self {
-            army, 
+            army,
             move_timer: Timer::from_millis(2000),
             direction: 1,
         }
@@ -50,9 +48,10 @@ impl Invaders {
             let mut downwards = false;
             if self.direction == -1 {
                 let min_x = self.army.iter().map(|invader| invader.x).min().unwrap_or(0);
-                if min_x == 0 { // on the left side of the screen, change directions
-                  self.direction = 1;
-                  downwards = true;  
+                if min_x == 0 {
+                    // on the left side of the screen, change directions
+                    self.direction = 1;
+                    downwards = true;
                 }
             } else {
                 let max_x = self.army.iter().map(|invader| invader.x).max().unwrap_or(0);
@@ -63,7 +62,7 @@ impl Invaders {
             }
 
             if downwards {
-                let new_duration = max(self.move_timer.duration.as_millis() - 250, 250);    
+                let new_duration = max(self.move_timer.duration.as_millis() - 250, 250);
                 self.move_timer = Timer::from_millis(new_duration as u64);
                 for invader in self.army.iter_mut() {
                     invader.y += 1;
@@ -88,27 +87,31 @@ impl Invaders {
     }
 
     pub fn kill_invader_at(&mut self, x: usize, y: usize) -> bool {
-        if let Some(idx) = self 
+        if let Some(idx) = self
             .army
             .iter()
-            .position(|invader| (invader.x == x) && (invader.y == y)) { // TODO what is the one-liner way to do this now? 
-                self.army.remove(idx);
-                true
-            } else {
-                false
-            }
+            .position(|invader| (invader.x == x) && (invader.y == y))
+        {
+            // TODO what is the one-liner way to do this now?
+            self.army.remove(idx);
+            true
+        } else {
+            false
+        }
     }
 }
 
 impl Drawable for Invaders {
     fn draw(&self, frame: &mut Frame) {
         for invader in self.army.iter() {
-            frame[invader.x][invader.y] = if (self.move_timer.time_left.as_secs_f32() 
-                / self.move_timer.duration.as_secs_f32()) > 0.5 {
-                    "x"
-                } else {
-                    "+"
-                };
+            frame[invader.x][invader.y] = if (self.move_timer.time_left.as_secs_f32()
+                / self.move_timer.duration.as_secs_f32())
+                > 0.5
+            {
+                "x"
+            } else {
+                "+"
+            };
         }
     }
 }

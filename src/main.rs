@@ -1,24 +1,24 @@
+use crossterm::{
+    cursor::{Hide, Show},
+    event::{self, Event, KeyCode},
+    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+    ExecutableCommand,
+};
+use invaders::{
+    frame::{self, new_frame, Drawable},
+    invaders::Invaders,
+    player::Player,
+    render,
+};
+use rusty_audio::Audio;
 use std::{
     error::Error,
     sync::mpsc::{self},
     time::{Duration, Instant},
     {io, thread},
 };
-use crossterm::{
-    ExecutableCommand,
-    cursor::{Hide, Show},
-    event::{self, Event, KeyCode},
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
-};
-use invaders::{
-    frame::{self, Drawable, new_frame},
-    invaders::{Invaders},
-    player::{Player},
-    render,
-};
-use rusty_audio::Audio;
 
-fn main() -> Result <(), Box<dyn Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     let mut audio = Audio::new();
     audio.add("explode", "./sounds/explode.wav");
     audio.add("lose", "./sounds/lose.wav");
@@ -28,7 +28,7 @@ fn main() -> Result <(), Box<dyn Error>> {
     audio.add("win", "./sounds/win.wav");
     audio.play("startup");
 
-    // Terminal 
+    // Terminal
     let mut stdout = io::stdout();
     terminal::enable_raw_mode()?;
     stdout.execute(EnterAlternateScreen)?;
@@ -60,13 +60,13 @@ fn main() -> Result <(), Box<dyn Error>> {
         instant = Instant::now();
         let mut curr_frame = new_frame();
 
-        // Input 
+        // Input
         while event::poll(Duration::default())? {
             if let Event::Key(key_event) = event::read()? {
                 match key_event.code {
                     KeyCode::Left => player.move_left(),
                     KeyCode::Right => player.move_right(),
-                    KeyCode::Char(' ') | KeyCode::Enter => { 
+                    KeyCode::Char(' ') | KeyCode::Enter => {
                         if player.shoot() {
                             audio.play("pew");
                         }
@@ -80,7 +80,7 @@ fn main() -> Result <(), Box<dyn Error>> {
             }
         }
 
-        // Updates 
+        // Updates
         player.update(delta);
         if invaders.update(delta) {
             audio.play("move");
@@ -89,9 +89,9 @@ fn main() -> Result <(), Box<dyn Error>> {
             audio.play("explode");
         }
 
-        // Draw & render - will fail for first few sends (due to receiver not being present?) 
+        // Draw & render - will fail for first few sends (due to receiver not being present?)
         // TODO look into this more
-        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders]; // generics 
+        let drawables: Vec<&dyn Drawable> = vec![&player, &invaders]; // generics
         for drawable in drawables {
             drawable.draw(&mut curr_frame);
         }
@@ -99,19 +99,18 @@ fn main() -> Result <(), Box<dyn Error>> {
         let _ = render_tx.send(curr_frame);
         thread::sleep(Duration::from_millis(1));
 
-        // Win or lose? 
+        // Win or lose?
         if invaders.all_killed() {
             audio.play("win");
             break 'gameloop;
-        } 
+        }
         if invaders.reached_bottom() {
             audio.play("lose");
             break 'gameloop;
         }
     }
 
-
-    // Cleanup 
+    // Cleanup
     drop(render_tx);
     render_handle.join().unwrap();
     audio.wait();
